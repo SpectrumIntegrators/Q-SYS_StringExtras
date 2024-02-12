@@ -1,0 +1,7 @@
+{
+    "version": "1.0.0",
+    "type": "LuaModule",
+    "author": "jonathand@spectrumintegrators.com",
+    "description": "Adds additional functions to strings",
+    "requiredVersion" : "9.4.5"
+}
