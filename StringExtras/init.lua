@@ -5,114 +5,49 @@ Adds additional functions to strings
 2024-02-13
 Jonathan Dean (jonathand@spectrumintegrators.com)
 
-Added functions: 
-* trim: Trim whitespace from beginning and end of a string
-* trimStart: Trim whitespace from beginning of a string
-* trimEnd: Trim whitespace from end of a string
-* endsWith: Returns true if the last portion of a string matches the specified value
-* startsWith: Returns true if the beginning  portion of a string matches the specified value
-* escape: Escape all nonprintable characters as \ddd (compatible with Lua string literals)
-* hexescape: Escape all nonprintable characters as \xdd (compatible with every OTHER language... well, except VB)
-* contains: Returns true if the string contains the specified value anywhere in it (case sensitive, pattern matching is disabled)
-* multiply: Returns the string repeated the specified number of times
-* split: Splits a string with the specified delimiter (if the delimiter is not specified or is an empty string, the string is split at each character)
-* join: Combines elements of a table into a string, with each element separated by an optional delimiter
-* partition: Split the string at the first occurance of the specified partition value and return the left part, the delimiter, and the right part
-* rpartition: Split the string at the last occurance of the specified partition value and return the left part, the delimiter, and the right part
-
-Usage:
-1. Copy this folder to %USERPROFILE%\Documents\QSC\Q-Sys Designer\Modules
-2. Install the module from Tools > Show Design Resources
-3. Add at the top of your Lua script: `require "StringExtras"`
-
-Use these functions as you would any other string function, either string.func(thestring, argument) or thestring:func(argument)
-
-Examples:
-```
-require "StringExtras"
-local x = "  abcd1234  "
-print(x:trim():endsWith("1234"))
--- prints true
-print(string.endsWith(x, "1234"))
--- prints false because the string was not trimmed
-```
-
-```
-require "StringExtras"
-local x = "Hello, world. my name is Joe."
-print(x:contains("world"))
--- prints true
-print(x:contains("World"))
--- prints false because the W is capitalized in the search term
-```
-
-```
-require "StringExtras"
-print(string.multiply("*", 10))
--- prints **********
-```
-
-```
-require "StringExtras"
-local x = "abcd;1234;"
-local t = x:split(";")
-for _, v in ipairs(t) do
-    print(string.format("'%s", v))
-end
--- prints
--- 'abcd'
--- '1234'
--- ''
-```
-
-```
-require "StringExtras"
-
-local t = {"a", "b", 3}
-print(string.join(t, "-"))
--- prints a-b-3
-```
-
-```
-require "StringExtras"
-local s = "/usr/local/bin/program"
-print(s:rpartition("/"))
--- prints /usr/local/bin    /   program
-```
+See readme for usage information
 
 ]]--
 
 
 -- Trim whitespace from beginning and end of a string
 string.trim = function(s)
+    assert(type(s) == "string", string.format("string expected, got %s", type(s)))
     ret = string.gsub(s, "^%s*(.-)%s*$", "%1")
     return ret
 end
 
 -- Trim whitespace from beginning of a string
 string.trimStart = function(s)
+    assert(type(s) == "string", string.format("string expected, got %s", type(s)))
     ret = string.gsub(s, "^%s*(.-)$", "%1")
     return ret
 end
 
 -- Trim whitespace from end of a string
 string.trimEnd = function (s)
+    assert(type(s) == "string", string.format("string expected, got %s", type(s)))
     ret = string.gsub(s, "^(.-)%s*$", "%1")
     return ret
 end
 
 -- Returns true if the last portion of a string matches a specified value
 string.endsWith = function(s, x)
+    assert(type(s) == "string", string.format("string expected, got %s", type(s)))
+    assert(type(x) == "string", string.format("string expected, got %s", type(x)))
     return (string.sub(s, -(#x)) == x)
 end
 
 -- Returns true if the beginning  portion of a string matches a specified value
 string.startsWith = function(s, x)
+    assert(type(s) == "string", string.format("string expected, got %s", type(s)))
+    assert(type(x) == "string", string.format("string expected, got %s", type(x)))
     return (string.sub(s, 1, #x) == x)
 end
 
 -- Escape all nonprintable characters (compatible with Lua string literals)
 string.escape = function(s)
+    assert(type(s) == "string", string.format("string expected, got %s", type(s)))
     local ret = ""
     local curChar, curCharB
     for i=1, #s do
@@ -131,6 +66,7 @@ end
 
 -- Escape all nonprintable characters (compatible with every OTHER language... well, except VB)
 string.hexescape = function(s)
+    assert(type(s) == "string", string.format("string expected, got %s", type(s)))
     local ret = ""
     local curChar, curCharB
     for i=1, #s do
@@ -149,13 +85,17 @@ end
 
 -- Returns true if the string s contains the string x anywhere in it (pattern matching is disabled)
 string.contains = function(s, x)
+    assert(type(s) == "string", string.format("string expected, got %s", type(s)))
+    assert(type(x) == "string", string.format("string expected, got %s", type(x)))
     return s:find(x, 1, true) ~= nil
 end
 
 -- Returns the string repeated the specified number of times
 string.multiply = function(s, n)
+    assert(type(s) == "string", string.format("string expected, got %s", type(s)))
+    assert(type(n) ~= number, "number expected, got %s", type(n))
     local ret = ""
-    for i=1,tonumber(n) do
+    for i=1,n do
         ret = ret .. s
     end
     return ret
@@ -233,4 +173,36 @@ string.rpartition = function(s, d)
     delimStart = #s -delimStart + 1
     delimEnd = #s - delimEnd + 1
     return s:sub(1, delimStart-1), s:sub(delimStart, delimEnd), s:sub(delimEnd+1)
+end
+
+string.padLeft = function(s, n, d)
+    assert(type(s) == "string", string.format("string expected, got %s", type(s)))
+    assert(type(n) == "number" or n == nil, string.format("number expected, got %s", type(n)))
+    assert(type(d) == "string" or d == nil, string.format("string expected, got %s", type(d)))
+    if n == nil then n = 0 end
+    if d == nil then d = " " end
+    if type(n) ~= "number" then n = tonumber(n) end
+    if type(d) ~= "string" then d = tostring(d) end
+
+    local pad  = ""
+    for i=1,n do
+        pad = pad .. d
+    end
+    return pad .. s
+end
+
+string.padRight = function(s, n, d)
+    assert(type(s) == "string", string.format("string expected, got %s", type(s)))
+    assert(type(n) == "number" or n == nil, string.format("number expected, got %s", type(n)))
+    assert(type(d) == "string" or d == nil, string.format("string expected, got %s", type(d)))
+    if n == nil then n = 0 end
+    if d == nil then d = " " end
+    if type(n) ~= "number" then n = tonumber(n) end
+    if type(d) ~= "string" then d = tostring(d) end
+
+    local pad = ""
+    for i=1,n do
+        pad = pad .. d
+    end
+    return s .. pad
 end
