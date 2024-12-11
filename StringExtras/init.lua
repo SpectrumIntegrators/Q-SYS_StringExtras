@@ -212,7 +212,7 @@ string.toHexString = function(s, d)
     assert(type(s) == "string", string.format("string expected, got %s", type(s)))
     if d == nil then d = " " end
     assert(type(d)=="string", string.format("Delimiter must be a string, not %s", type(d)))
-    return s:gsub(".", function(x) return string.format("%X ", string.byte(x)) end):gsub("^(.-)%s*$", "%1"):gsub(" ", d)
+    return s:gsub(".", function(x) return string.format("%02X ", string.byte(x)) end):gsub("^(.-)%s*$", "%1"):gsub(" ", d)
 end
 
 -- Converts all two-digit hex pairs to the corresponding byte
