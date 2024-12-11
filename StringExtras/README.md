@@ -12,39 +12,41 @@ Add the `StringExtras` folder to somewhere on your Lua package path and then use
 3. Add `require "StringExtras"` to the top of each script that will use it
 
 ## Added Functions
-* [`contains`](#contains-search)
-* [`endsWith`](#endswith-search)
-* [`escape`](#escape)
-* [`hexescape`](#hexescape)
-* [`join`](#join-table-delimiter)
-* [`multiply`](#multiply-character-quantity)
-* [`padLeft`](#padleft-width-character)
-* [`padRight`](#padright-width-character)
-* [`partition`](#partition-delimiter)
-* [`rpartition`](#rpartition-delimiter)
-* [`split`](#split-delimiter)
-* [`startsWith`](#startswith-search)
-* [`trim`](#trim)
-* [`trimStart`](#trimstart)
-* [`trimEnd`](#trimend)
+* [contains](#contains-search)
+* [endsWith](#endswith-search)
+* [escape](#escape)
+* [fromHexString](#fromhexstring)
+* [hexescape](#hexescape)
+* [join](#join-table-delimiter)
+* [multiply](#multiply-character-quantity)
+* [padLeft](#padleft-width-character)
+* [padRight](#padright-width-character)
+* [partition](#partition-delimiter)
+* [rpartition](#rpartition-delimiter)
+* [split](#split-delimiter)
+* [startsWith](#startswith-search)
+* [toHexString](#tohexstring)
+* [trim](#trim)
+* [trimStart](#trimstart)
+* [trimEnd](#trimend)
+
+
+
 
 ## Function Details
 
-Most of these functions can either be called procedurally or as object methods, that is you can use `string.contains()` or `x:contains()` if `x` is a string. (`join` can only be called procedurally because it accepts a table as the first argument, in Python you could call `";".join(list)` but that won't work in Lua so we have to call `string.join(table, ";")`)
-
-
 ### `contains <search>`
-Returns `true` if the string contains the specified value anywhere in it (case sensitive, pattern matching is disabled)
+Returns true if the string contains the specified value anywhere in it (case sensitive, pattern matching is disabled)
 
-```
+```lua
 print(string.contains("hello, world!", "lo"))
 -- prints true
 ```
 
 ### `endsWith <search>`
-Returns `true` if the last portion of a string matches the specified value
+Returns true if the last portion of a string matches the specified value
 
-```
+```lua
 print(string.endsWith("hello, world", "rld"))
 -- prints true
 ```
@@ -52,16 +54,26 @@ print(string.endsWith("hello, world", "rld"))
 ### `escape`
 Escape all nonprintable characters as \ddd (compatible with Lua string literals)
 
-```
+```lua
 local s = "hello\r\nworld\009"
 print(s:escape())
 -- prints hello\013\010\009
 ```
 
+### `fromHexString`
+Convert two-digit hex character pairs into bytes
+(This ignores non-hex characters, but that should only be used to ignore spaces or punctuation and not to extract hex bytes from a text string)
+
+```lua
+local s = "41 42 20 30 31"
+print(s:fromHexString())
+-- prints AB 01
+```
+
 ### `hexescape`
 Escape all nonprintable characters as \xdd (compatible with every OTHER language... well, except VB)
 
-```
+```lua
 local s = "hello\r\nworld\009"
 print(s:escape())
 -- prints hello\x0d\x0a\x09
@@ -70,7 +82,7 @@ print(s:escape())
 ### `join <table> [delimiter]`
 Combines elements of a table into a string, with each element separated by an optional delimiter
 
-```
+```lua
 local t = {"a", "b", 3}
 print(string.join(t, "-"))
 -- prints a-b-3
@@ -78,8 +90,7 @@ print(string.join(t, "-"))
 
 ### `multiply <character> <quantity>`
 Returns the string repeated the specified number of times
-
-```
+```lua
 print(string.multiply("*", 10))
 -- prints **********
 ```
@@ -87,7 +98,7 @@ print(string.multiply("*", 10))
 ### `padLeft [width] [character]`
 Pads the left (beginning) side of the string with the specified number of padding characters (if no character is specified, space is used)
 
-```
+```lua
 print("'" .. string.padLeft("hello", 3) .. "'")
 -- prints '   hello'
 ```
@@ -95,7 +106,7 @@ print("'" .. string.padLeft("hello", 3) .. "'")
 ### `padRight [width] [character]`
 Pads the right (end) side of the string with the specified number of padding characters (if no character is specified, space is used)
 
-```
+```lua
 print("'" .. string.padRight("hello", 3, "!") .. "'")
 -- prints 'hello!!!'
 ```
@@ -103,7 +114,7 @@ print("'" .. string.padRight("hello", 3, "!") .. "'")
 ### `partition [delimiter]`
 Split the string at the first occurrence of the specified partition value and return the left part, the delimiter, and the right part
 
-```
+```lua
 local s = "My_name_is_mud"
 print(s:partition(" "))
 -- prints My    _    name_is_mud
@@ -113,7 +124,7 @@ print(s:partition(" "))
 ### `rpartition [delimiter]`
 Split the string at the last occurrence of the specified partition value and return the left part, the delimiter, and the right part
 
-```
+```lua
 local s = "/usr/local/bin/program"
 print(s:rpartition("/"))
 -- prints /usr/local/bin    /   program
@@ -122,7 +133,7 @@ print(s:rpartition("/"))
 ### `split <delimiter>`
 Splits a string with the specified delimiter (if the delimiter is not specified or is an empty string, the string is split at each character)
 
-```
+```lua
 local x = "abcd;1234;"
 local t = x:split(";")
 for _, v in ipairs(t) do
@@ -135,17 +146,29 @@ end
 ```
 
 ### `startsWith <search>`
-Returns `true` if the beginning portion of a string matches the specified value
+Returns true if the beginning  portion of a string matches the specified value
 
-```
+```lua
 print(string.startsWith("hello, world", "he"))
 -- prints true
+```
+
+### `toHexString`
+Converts each character (byte) from a string to two-digit hex pairs separated by a delimiter (defaults to a single space)
+
+```lua
+local s = "AB 12"
+print(s:toHexString())
+-- prints 41 42 20 31 32
+
+print(s:toHexString("."))
+-- prints 41.42.20.31.32
 ```
 
 ### `trim`
 Trim whitespace from beginning and end of a string
 
-```
+```lua
 print(string.trim("  hello  "))
 -- prints hello
 local s = "  hello  "
@@ -156,7 +179,7 @@ print(s:trim())
 ### `trimStart`
 Trim whitespace from beginning of a string
 
-```
+```lua
 local s = "  hello  "
 print(string.format("'%s'", s:trimStart()))
 -- prints 'hello  '
@@ -165,7 +188,7 @@ print(string.format("'%s'", s:trimStart()))
 ### `trimEnd`
 Trim whitespace from end of a string
 
-```
+```lua
 local s = "  hello  "
 print(string.format("'%s'", s:trimEnd()))
 -- prints '  hello'

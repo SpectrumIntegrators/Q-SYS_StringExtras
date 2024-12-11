@@ -206,3 +206,17 @@ string.padRight = function(s, n, d)
     end
     return s .. pad
 end
+
+-- Converts all characters to two-digit hex pairs
+string.toHexString = function(s, d)
+    assert(type(s) == "string", string.format("string expected, got %s", type(s)))
+    if d == nil then d = " " end
+    assert(type(d)=="string", string.format("Delimiter must be a string, not %s", type(d)))
+    return s:gsub(".", function(x) return string.format("%X ", string.byte(x)) end):gsub("^(.-)%s*$", "%1"):gsub(" ", d)
+end
+
+-- Converts all two-digit hex pairs to the corresponding byte
+string.fromHexString = function(s)
+    assert(type(s) == "string", string.format("string expected, got %s", type(s)))
+    return s:gsub("%X*(%x%x)%X*", function(x) return string.char(tonumber(x, 16)) end)
+end
