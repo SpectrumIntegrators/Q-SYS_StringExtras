@@ -53,12 +53,12 @@ print(string.endsWith("hello, world", "rld"))
 ```
 
 ### `escape`
-Escape all nonprintable characters as \ddd (compatible with Lua string literals)
+Escape all nonprintable characters as an escape sequence, if no common sequence is found, fall back to `\ddd` (compatible with Lua string literals)
 
 ```lua
 local s = "hello\r\nworld\009"
 print(s:escape())
--- prints hello\013\010\009
+-- prints hello\r\n\009
 ```
 
 ### `fromHexString`

@@ -10,6 +10,30 @@ See readme for usage information
 ]]--
 
 
+ESCAPE_CHARS = {
+    ["a"] = "\a",
+    ["b"] = "\b",
+    ["f"] = "\f",
+    ["n"] = "\n",
+    ["r"] = "\r",
+    ["t"] = "\t",
+    ["v"] = "\v",
+    ["\\"] = "\\",
+    ["\""] = "\"",
+    ["\'"] = "\'",
+    ["\n"] = "",
+    ["\r"] = ""
+}
+UNESCAPE_CHARS = {
+    ["\a"] = "\\a",
+    ["\b"] = "\\b",
+    ["\f"] = "\\f",
+    ["\n"] = "\\n",
+    ["\r"] = "\\r",
+    ["\t"] = "\\t",
+    ["\v"] = "\\v",
+}
+
 -- Trim whitespace from beginning and end of a string
 string.trim = function(s)
     assert(type(s) == "string", string.format("string expected, got %s", type(s)))
@@ -53,13 +77,26 @@ string.escape = function(s)
     for i=1, #s do
         curChar = s:sub(i,i)
         curCharB = string.byte(curChar)
-        if curCharB < 0x20 or curCharB > 0x7e then 
-            -- not printable
-            ret = ret .. string.format("\\%03d", curCharB)
-        else 
-            --printable
+        print(curCharB)
+        if curCharB >= 0x20 and curCharB <= 0x7e then 
+            --printable, just add it
             ret = ret .. curChar
+            goto escape_nextloop
         end
+
+        -- not printable
+        -- first look for common escape sequences
+        for esc_c, unesc_c in pairs(UNESCAPE_CHARS) do
+            if curChar == esc_c then
+                ret = ret .. unesc_c
+                goto escape_nextloop
+            end
+        end
+
+        -- if we didn't find one, we end up here and just convert it to a plain ol decimal escape sequence
+        ret = ret .. string.format("\\%03d", curCharB)
+
+        ::escape_nextloop::
     end
     return ret
 end
@@ -237,20 +274,6 @@ end
 -- Unescape escaped characters
 string.unescape = function(s)
     assert(type(s) == "string", string.format("string expected, got %s", type(s)))
-    local escapechars = {
-        ["a"] = "\a",
-        ["b"] = "\b",
-        ["f"] = "\f",
-        ["n"] = "\n",
-        ["r"] = "\r",
-        ["t"] = "\t",
-        ["v"] = "\v",
-        ["\\"] = "\\",
-        ["\""] = "\"",
-        ["\'"] = "\'",
-        ["\n"] = "",
-        ["\r"] = ""
-    }
     local ret = ""
     local i = 1
     while i <= #s do
@@ -259,7 +282,7 @@ string.unescape = function(s)
         if c ~= "\\" then
             -- just a regular character, so keep it
             ret = ret .. c
-            goto nextloop
+            goto unescape_nextloop
         else
             assert(i + 1 <= #s, "unfinished escape sequence at end of string")
             i=i+1 -- skip the backslash
@@ -268,7 +291,7 @@ string.unescape = function(s)
                 -- look for common single-character sequences
                 if c == ec then
                     ret = ret .. ev
-                    goto nextloop
+                    goto unescape_nextloop
                 end
             end
 
@@ -301,7 +324,7 @@ string.unescape = function(s)
                 chardecimal = tonumber(chardecimalstr)
                 assert(chardecimal < 256, string.format("invalid decimal escape sequence, must be between 0 and 255 but we found %d", chardecimal))
                 ret = ret .. string.char(chardecimal)
-                goto nextloop
+                goto unescape_nextloop
             end
 
             if c == "u" then
@@ -342,7 +365,7 @@ string.unescape = function(s)
                 else
                     error(string.format("invalid unicode codepoint %x", codepoint))
                 end
-                goto nextloop
+                goto unescape_nextloop
             end
             
             if c == "z" then
@@ -351,14 +374,14 @@ string.unescape = function(s)
                     -- skip all spaces
                     i = i + 1
                 end
-                goto nextloop
+                goto unescape_nextloop
             end
 
             -- fail if we didn't find a good escape sequence
             error(string.format("invalid escape character: \\%s", c))
         end
 
-        ::nextloop::
+        ::unescape_nextloop::
         print(i)
         i = i + 1
     end
