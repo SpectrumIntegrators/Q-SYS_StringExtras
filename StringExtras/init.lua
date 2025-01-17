@@ -218,5 +218,149 @@ end
 -- Converts all two-digit hex pairs to the corresponding byte
 string.fromHexString = function(s)
     assert(type(s) == "string", string.format("string expected, got %s", type(s)))
-    return s:gsub("%X*(%x%x)%X*", function(x) return string.char(tonumber(x, 16)) end)
+    local ret = ""
+    -- get rid of all whitespace and line breaks
+    s = s:gsub(" ", ""):gsub("\n", ""):gsub("\r", ""):gsub("\t", "")
+    -- if the string is an odd number of characters, put a zero at the start
+    if #s % 2 ~= 0 then
+        s = "0" .. s
+    end
+    for i=1,#s, 2 do
+        local hexpair = s:sub(i, i+1)
+        local hexval = tonumber(hexpair, 16)
+        assert(hexval ~= nil, string.format("invalid hex value: %s", hexpair))
+        ret = ret .. string.char(hexval)
+    end
+    return ret
+end
+
+-- Unescape escaped characters
+string.unescape = function(s)
+    assert(type(s) == "string", string.format("string expected, got %s", type(s)))
+    local escapechars = {
+        ["a"] = "\a",
+        ["b"] = "\b",
+        ["f"] = "\f",
+        ["n"] = "\n",
+        ["r"] = "\r",
+        ["t"] = "\t",
+        ["v"] = "\v",
+        ["\\"] = "\\",
+        ["\""] = "\"",
+        ["\'"] = "\'",
+        ["\n"] = "",
+        ["\r"] = ""
+    }
+    local ret = ""
+    local i = 1
+    while i <= #s do
+        local c = s:sub(i,i)
+        
+        if c ~= "\\" then
+            -- just a regular character, so keep it
+            ret = ret .. c
+            goto nextloop
+        else
+            assert(i + 1 <= #s, "unfinished escape sequence at end of string")
+            i=i+1 -- skip the backslash
+            c = s:sub(i,i)
+            for ec, ev in pairs(escapechars) do
+                -- look for common single-character sequences
+                if c == ec then
+                    ret = ret .. ev
+                    goto nextloop
+                end
+            end
+
+            -- check for \nnn decimal character string
+            local chardecimalstr = ""
+            local chardecimal = nil
+            local escapegood = false
+            local j = 0
+            for j=i,i+2 do
+                if j > #s then
+                    if escapegood then
+                        -- we got at least a partial three-digit number
+                        break
+                    else
+                        -- we're past the end of the string but didn't find any numbers
+                        err("unfinished escape sequence at end of string")
+                    end
+                end
+                if s:byte(j) >= 0x30 and s:byte(j) <= 0x39 then
+                    escapegood = true
+                    i = j -- step over this character
+                    chardecimalstr = chardecimalstr .. s:sub(j,j)
+                else
+                    -- not a number, so we're done now
+                    break
+                end
+            end
+            if escapegood then
+
+                chardecimal = tonumber(chardecimalstr)
+                assert(chardecimal < 256, string.format("invalid decimal escape sequence, must be between 0 and 255 but we found %d", chardecimal))
+                ret = ret .. string.char(chardecimal)
+                goto nextloop
+            end
+
+            if c == "u" then
+                -- look for unicode escape sequence
+                assert(s:sub(i+1,i+1) == "{", "invalid unicode escape sequence, expecting {")
+                local bracketend = s:find("}", i+2)
+                assert(bracketend ~= nil, "invalid unicode escape sequence, expecting }")
+
+                local codepointstr = s:sub(i+2, bracketend-1)
+                assert(codepointstr ~= "", "invalid unicode escape sequence, hexadecimal value expected")
+                assert(#codepointstr <= 8, "UTF-8 sequence too long, must be 8 or fewer hex characters")
+                local codepoint = tonumber(codepointstr, 16)
+                assert(codepoint ~= nil, "invalid unicode escape sequence, hexadecimal value expected")
+                assert(codepoint <= 0x7FFFFFFF, "UTF-8 value too large, must be less than 0x80000000")
+                i = bracketend -- move the pointer to the end of this escape sequence
+                -- ripped this unicode logic from stackoverflow, haven't messed with optimizing it
+                -- https://stackoverflow.com/questions/7983574/how-to-write-a-unicode-symbol-in-lua
+                if codepoint < 128 then 
+                    ret = ret .. string.char(codepoint)
+                elseif codepoint < 2048 then 
+                    local byte2 = (128 + (codepoint % 64))
+                    local byte1 = (192 + math.floor(codepoint / 64))
+                    ret = ret .. string.char(byte1, byte2)
+                elseif codepoint < 65536 then 
+                    local byte3 = (128 + (codepoint % 64))
+                    codepoint = math.floor(codepoint / 64)
+                    local byte2 = (128 + (codepoint % 64))
+                    local byte1 = (224 + math.floor(codepoint / 64))
+                    ret = ret .. string.char(byte1, byte2, byte3)
+                elseif codepoint < 1114112 then
+                    local byte4 = (128 + (codepoint % 64))
+                    codepoint = math.floor(codepoint / 64)
+                    local byte3 = (128 + (codepoint % 64))
+                    codepoint = math.floor(codepoint / 64)
+                    local byte2 = (128 + (codepoint % 64))
+                    local byte1 = (240 + math.floor(codepoint / 64))
+                    ret = ret .. string.char(byte1, byte2, byte3, byte4)
+                else
+                    error(string.format("invalid unicode codepoint %x", codepoint))
+                end
+                goto nextloop
+            end
+            
+            if c == "z" then
+                -- look for whitespace zap
+                while s:sub(i,i) == " " do
+                    -- skip all spaces
+                    i = i + 1
+                end
+                goto nextloop
+            end
+
+            -- fail if we didn't find a good escape sequence
+            error(string.format("invalid escape character: \\%s", c))
+        end
+
+        ::nextloop::
+        print(i)
+        i = i + 1
+    end
+    return ret
 end
