@@ -2,6 +2,8 @@
 String Extras
 Adds additional functions to strings
 
+2025-06-15 changed join to use pairs instead of ipairs
+
 2024-02-13
 Jonathan Dean (jonathand@spectrumintegrators.com)
 
@@ -173,7 +175,7 @@ string.join = function(t, d)
     if d == nil then d = "" end
     local ret = ""
     if #t == 0 then return ret end
-    for _, v in ipairs(t) do
+    for _, v in pairs(t) do
         ret = ret .. tostring(v) .. d
     end
     ret = ret:sub(1, #ret - #d)
