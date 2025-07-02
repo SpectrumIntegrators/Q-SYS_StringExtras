@@ -79,7 +79,7 @@ string.escape = function(s)
     for i=1, #s do
         curChar = s:sub(i,i)
         curCharB = string.byte(curChar)
-        print(curCharB)
+        --print(curCharB)
         if curCharB >= 0x20 and curCharB <= 0x7e then 
             --printable, just add it
             ret = ret .. curChar
@@ -384,7 +384,7 @@ string.unescape = function(s)
         end
 
         ::unescape_nextloop::
-        print(i)
+        --print(i)
         i = i + 1
     end
     return ret
