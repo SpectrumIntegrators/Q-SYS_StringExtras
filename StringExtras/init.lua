@@ -2,6 +2,7 @@
 String Extras
 Adds additional functions to strings
 
+2025-07-15 added ellipsis function
 2025-06-15 changed join to use pairs instead of ipairs
 
 2024-02-13
@@ -103,7 +104,7 @@ string.escape = function(s)
     return ret
 end
 
--- Escape all nonprintable characters (compatible with every OTHER language... well, except VB)
+-- Escape all nonprintable characters (compatible with every OTHER language... well, except VB and assembly and pascal... OK *many* other language)
 string.hexescape = function(s)
     assert(type(s) == "string", string.format("string expected, got %s", type(s)))
     local ret = ""
@@ -182,7 +183,7 @@ string.join = function(t, d)
     return ret
 end
 
--- Split the string at the first occurance of the specified partition value and return the left part, the delimiter, and the right part
+-- Split the string at the first occurrence of the specified partition value and return the left part, the delimiter, and the right part
 string.partition = function(s, d)
     assert(type(s) == "string", string.format("string expected, got %s", type(s)))
     assert(type(d) == "string" or d == nil, string.format("string expected, got %s", type(d)))
@@ -197,7 +198,7 @@ string.partition = function(s, d)
     return s:sub(1, delimStart-1), s:sub(delimStart, delimEnd), s:sub(delimEnd+1)
 end
 
--- Split the string at the last occurance of the specified partition value and return the left part, the delimiter, and the right part
+-- Split the string at the last occurrence of the specified partition value and return the left part, the delimiter, and the right part
 string.rpartition = function(s, d)
     assert(type(s) == "string", string.format("string expected, got %s", type(s)))
     assert(type(d) == "string" or d == nil, string.format("string expected, got %s", type(d)))
@@ -388,4 +389,26 @@ string.unescape = function(s)
         i = i + 1
     end
     return ret
+end
+
+-- Truncate a string and add an ellipsis
+string.ellipsis = function(s, length)
+    assert(type(s) == "string", string.format("string expected, got %s", type(s)))
+    local ret = ""
+    if math.abs(length) <= 3 then
+        -- length is too short to do anything with
+        return "..."
+    end
+    if  #s <= 3 or #s <= math.abs(length) then
+        -- no need to truncate
+        return s
+    end
+
+    if length > 0 then
+        -- use the left part of the string and cut off the right
+        return s:sub(1, length - 3) .. "..."
+    else
+        -- use the right part of the string and cut off the left
+        return "..." .. s:sub(length + 3)
+    end
 end

@@ -30,7 +30,7 @@ Add the `StringExtras` folder to somewhere on your Lua package path and then use
 * [trimStart](#trimstart)
 * [trimEnd](#trimend)
 * [unescape](#unescape)
-
+* [ellipsis](#ellipsis)
 
 
 
@@ -231,6 +231,25 @@ world!😂
 s = string.unescape("\\u{1f602}") -- one single UTF-8 glyph
 print(#s)
 -- prints 4
+```
+
+### `ellipsis`
+Return a string that is no longer than the specified length, truncating and adding ellipses when necessary. Use a negative length to remove the beginning of the string instead.
+If length is less than 4 then only ellipses are returned. If length is more than or the same as the length of the string, then the whole string is returned.
+
+```lua
+s = "hello world"
+print(s:ellipsis(8))
+print(s:ellipsis(-8))
+print(s:ellipses(1))
+print(s:ellipses(20))
+
+--[[ Output:
+hello...
+...world
+...
+hello world
+]]
 ```
 
 [Back to top](#stringextras)
